@@ -6,7 +6,7 @@ from tqdm import tqdm
 def main():
 	N = 30
 	R = 1.0
-	x0 = np.array([1.0, -1.0])
+	x0 = np.array([.0, .0])
 	lam0 = np.zeros(x0.shape[0])
 	u = np.random.uniform(-1,1,size=N)
 	t = np.linspace(0,10,N)
