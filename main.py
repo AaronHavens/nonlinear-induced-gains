@@ -41,13 +41,14 @@ def main():
 	#t = np.linspace(0,10,N)
 	u = u*R/L2_norm(u.reshape(T,1))
 	plt.plot(u, c=colorFader(c1,c2,0))
-	for i in tqdm(range(10)):
+	iterations = 20
+	for i in tqdm(range(iterations)):
 		x, y = phi(f_x_1, y_x, u, T, x0)
 		x_rev, u_rev, nu = pi(x,u,y)
 		lam, gamma = psi(f_x_1_jax, y_x, nu, x_rev, u_rev, T, lam0)
 		u = theta(gamma, R).reshape(T,)
 		#print(i)
-		plt.plot(u,c=colorFader(c1,c2,(i+1)/10))
+		plt.plot(u,c=colorFader(c1,c2,(i+1)/iterations))
 		print('Computed Worst-cas Gain: {}'.format(L2_norm(y)/L2_norm(u.reshape(T,1))))
 	plt.ylabel('u(t)')
 	plt.xlabel('t')
