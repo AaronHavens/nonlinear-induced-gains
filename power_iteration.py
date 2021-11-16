@@ -110,6 +110,6 @@ def f_x_jax(x_k,t_k,u_k):
 	return jnp.array([-x_k[0] + x_k[1] - x_k[0]*x_k[1]**2,-x_k[1]*x_k[0]**2 - x_k[1] + u_k])
 
 def y_x(x_k, u_k, t_k):
-	return x_k
+	return x_k + u_k*0.1
 
 

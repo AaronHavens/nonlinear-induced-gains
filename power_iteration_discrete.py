@@ -12,7 +12,7 @@ def phi(f_fn, y_fn, u, T, x0):
 	x = np.zeros((T, x_dim))
 	x[0,:] = x0
 	for i in range(1,T):
-		x_i = f_fn(x[i,:], u[i])
+		x_i = f_fn(x[i-1,:], u[i-1])
 		x[i] = x_i
 
 	y0 = y_fn(x[0],u[0])
@@ -100,6 +100,16 @@ def f_x_1(x_k, u_k):
 	B = np.array([[0.0],[0.1]])
 	K = np.array([[-2.0,-2.0]])
 	return (A+B@K)@x_k + B@(u_k.reshape(1,))
+
+def y_x_1(x_k, u_k):
+	K = np.array([[-2.0,-2.0]])
+	pi_x = K@x_k
+	return np.array([x_k[0],x_k[1], pi_x[0]*0.1])
+
+def y_x_1_jax(x_k, u_k):
+	K = jnp.array([[-2.0,-2.0]])
+	pi_x = K@x_k
+	return jnp.array([x_k[0],x_k[1], pi_x[0]*0.1])
 
 def f_x_jax(x_k,u_k):
 

@@ -3,6 +3,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from power_iteration_discrete import *
 from tqdm import tqdm
+from utils import get_network_func
+
 
 def colorFader(c1,c2,mix=0): #fade (linear interpolate) from color c1 (at mix=0) to c2 (mix=1)
     c1=np.array(mpl.colors.to_rgb(c1))
@@ -34,18 +36,39 @@ def main():
 	c2='red' #green
 
 	T = 200
-	R = 10.0
-	x0 = np.array([.0, .0])
+	R = 1.0
+	x0 = np.array([0.0, 0.0])
 	lam0 = np.zeros(x0.shape[0])
 	u = np.random.uniform(-1,1,size=T)
 	#t = np.linspace(0,10,N)
 	u = u*R/L2_norm(u.reshape(T,1))
 	plt.plot(u, c=colorFader(c1,c2,0))
-	iterations = 20
+	iterations = 50
+	pi_nn, pi_nn_jax, jac_pi_nn = get_network_func()
+
+	g = 10.
+	m = 0.15
+	l = 0.5
+	mu = 0.05
+	dt = 0.02
+
+
+	def f_pen(x, u):
+		return np.array([x[0] + x[1]*dt, x[1] + (g/l*np.sin(x[0])-mu/(m*l**2)*x[1]+1/(m*l**2)*(pi_nn(x) + u))*dt])
+
+	def f_pen_jax(x, u):
+		return jnp.array([x[0] + x[1]*dt, x[1] + (g/l*jnp.sin(x[0])-mu/(m*l**2)*x[1]+1/(m*l**2)*(pi_nn_jax(x) + u))*dt])
+
+	def y_pen(x, u):
+		return np.array([x[0],x[1],pi_nn(x)*0.1])
+
+	def y_pen_jax(x, u):
+		return jnp.array([x[0],x[1],pi_nn_jax(x)*0.1])
+
 	for i in tqdm(range(iterations)):
-		x, y = phi(f_x_1, y_x, u, T, x0)
+		x, y = phi(f_x_1, y_x_1, u, T, x0)
 		x_rev, u_rev, nu = pi(x,u,y)
-		lam, gamma = psi(f_x_1_jax, y_x, nu, x_rev, u_rev, T, lam0)
+		lam, gamma = psi(f_x_1_jax, y_x_1_jax, nu, x_rev, u_rev, T, lam0)
 		u = theta(gamma, R).reshape(T,)
 		#print(i)
 		plt.plot(u,c=colorFader(c1,c2,(i+1)/iterations))
@@ -53,6 +76,9 @@ def main():
 	plt.ylabel('u(t)')
 	plt.xlabel('t')
 	plt.grid()
+	plt.show()
+
+	plt.plot(u)
 	plt.show()
 
 
