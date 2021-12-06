@@ -35,16 +35,20 @@ def main():
 	c1='y' #blue
 	c2='red' #green
 
-	T = 200
+	T = 1000
 	R = 1.0
 	x0 = np.array([0.0, 0.0])
 	lam0 = np.zeros(x0.shape[0])
+	lam_w = 1.0
 	u = np.random.uniform(-1,1,size=T)
+	w = np.random.uniform(-1,1,size=T)
 	#t = np.linspace(0,10,N)
 	u = u*R/L2_norm(u.reshape(T,1))
 	plt.plot(u, c=colorFader(c1,c2,0))
-	iterations = 50
+	iterations = 20
 	pi_nn, pi_nn_jax, jac_pi_nn = get_network_func()
+	delta_u = 0.1
+	delta_z = 0.1
 
 	g = 10.
 	m = 0.15
@@ -66,13 +70,24 @@ def main():
 		return jnp.array([x[0],x[1],pi_nn_jax(x)*0.1])
 
 	for i in tqdm(range(iterations)):
-		x, y = phi(f_x_1, y_x_1, u, T, x0)
-		x_rev, u_rev, nu = pi(x,u,y)
-		lam, gamma = psi(f_x_1_jax, y_x_1_jax, nu, x_rev, u_rev, T, lam0)
-		u = theta(gamma, R).reshape(T,)
-		#print(i)
+		x, y, z = phi(f_x_1, y_x_1, z_x_1, u, w, delta_u, delta_z, T, x0)
+		x_rev, u_rev, w_rev, nu, eta = pi(x,u,w,y,z,lam_w)
+		gamma, kappa, lam_i = psi(f_x_1_jax, y_x_1_jax, z_x_1_jax, 
+							nu, eta, 
+							x_rev, u_rev, w_rev, 
+							delta_u, delta_z, T, lam0)
+		u, w, lam_w = theta(gamma, kappa, w, z, lam_w, R)
+		delta_u, delta_z = update_params(lam_i, delta_u, delta_z)
+		# delta_u = 1.0
+		# delta_z = 1.0
+		print(L2_norm(z)/L2_norm(w))
 		plt.plot(u,c=colorFader(c1,c2,(i+1)/iterations))
-		print('Computed Worst-cas Gain: {}'.format(L2_norm(y)/L2_norm(u.reshape(T,1))))
+		x,y,z=phi(f_x_1, y_x_1, z_x_1, u, w, delta_u, delta_z, T, x0)
+		z_y = np.concatenate((z,y),axis=1)
+		u_w = np.concatenate((u,w),axis=1)
+		print('lam_i', lam_i)
+		print('deltas: ',delta_u, delta_z)
+		print('Computed Worst-cas Gain: {}'.format(L2_norm(z_y)/L2_norm(u_w.reshape(T,2))))
 	plt.ylabel('u(t)')
 	plt.xlabel('t')
 	plt.grid()
